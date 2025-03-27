@@ -6,7 +6,6 @@ public class InteractionTest : MonoBehaviour
 {
     [SerializeField] private InputActionAsset inputAsset;
     [SerializeField] private InputActionReference actionRef;
-    [SerializeField] private GameObject notValidSphere;
     [SerializeField] private GameObject validSphere;
 
     [Space] 
@@ -35,9 +34,6 @@ public class InteractionTest : MonoBehaviour
         
         validSphere.SetActive(_isHitting);
         validSphere.transform.position = new Vector3(_hit.point.x, 88, _hit.point.z);
-        
-        notValidSphere.SetActive(!_isHitting);
-        notValidSphere.transform.position = new Vector3(_hit.point.x, 88, _hit.point.z);
     }
 
     private void Select()
@@ -50,7 +46,6 @@ public class InteractionTest : MonoBehaviour
 
         if (_isHitting)
         {
-            notValidSphere.SetActive(false);
             validSphere.SetActive(false);
             TransitionManager.Instance.TransitionToFuture(_hit.point);
             enabled = false;
