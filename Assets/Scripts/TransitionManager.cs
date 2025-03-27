@@ -5,18 +5,11 @@ using UnityEngine;
 
 public class TransitionManager : MonoBehaviour
 {
-    public enum TransitionType
-    {
-        Present,
-        Future
-    }
-
-
     [Header("Present & Future Objects")]
     [SerializeField] private GameObject presentObject;
     [SerializeField] private GameObject futureObject;
-    [SerializeField] private GameObject transitionBtn;
     [SerializeField] private float futureTargetY;
+    
 
     [Space]
     
@@ -35,9 +28,9 @@ public class TransitionManager : MonoBehaviour
     public static TransitionManager Instance;
     
     
-    private TransitionType _type;
-
-    private Vector3 _startPos;
+    private Vector3 m_StartPos;
+    
+    public bool isTransitioning { get; private set; }
 
     private void Awake()
     {
@@ -48,60 +41,102 @@ public class TransitionManager : MonoBehaviour
         }
 
         Instance = this;
-        
+
+        futureObject.transform.position = new Vector3(0, 44, 0);
         eyeXROrigin.transform.position = startingPosition;
         eyeXROrigin.transform.rotation = startingRotation;
     }
+    
 
-    private void Update()
+    public void TransitionToFuture(Vector3 target)
     {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-          //  Transition(TransitionType.Future);
-        }
-    }
-
-    public void Transition()
-    {
-        Debug.Log("do trans");
-        transitionBtn.SetActive(false);
-
-        _ = TransitionTask();
+        _ = TransitionToFutureTask(target);
     }
 
 
-    private async UniTask TransitionTask()
+    private async UniTask TransitionToFutureTask(Vector3 target)
     {
+        isTransitioning = true;
         Debug.Log("Start transition....");
-        _startPos = futureObject.transform.position;
+        m_StartPos = futureObject.transform.position;
+
+        floorXROrigin.transform.position = new Vector3(target.x, 88, target.z);
 
         
-        float camCurrentTime = 0;
-        while (camCurrentTime < timeToTransition)
+        float campusTime = 0;
+        while (campusTime < timeToTransition)
         {
-            camCurrentTime += Time.deltaTime;
-            ProcessTransition(camCurrentTime);
+            campusTime += Time.deltaTime;
             
+            futureObject.transform.position = Vector3.Lerp(m_StartPos,
+                new Vector3(futureObject.transform.position.x, futureTargetY, futureObject.transform.position.z),
+                EaseInOutQuad(campusTime / timeToTransition));
+            
+            await UniTask.Yield();
+        }
+
+        float camTime = 0;
+        while (camTime < timeToTransition)
+        {
+            camTime += Time.deltaTime;
+            eyeXROrigin.transform.position = Vector3.Lerp(startingPosition, floorXROrigin.transform.position, camTime / timeToTransition);
+            eyeXROrigin.transform.rotation = Quaternion.Lerp(startingRotation, floorXROrigin.transform.rotation, camTime / timeToTransition);
             await UniTask.Yield();
         }
         
         Debug.Log("End transition....");
         eyeXROrigin.SetActive(false);
         floorXROrigin.SetActive(true);
+        isTransitioning = false;
     }
 
-
-    private void ProcessTransition(float time)
+    public void TransitionToPresent()
     {
-        
-        eyeXROrigin.transform.position = Vector3.Lerp(startingPosition, floorXROrigin.transform.position, time / timeToTransition);
-        eyeXROrigin.transform.rotation = Quaternion.Lerp(startingRotation, floorXROrigin.transform.rotation, time / timeToTransition);
-        
-        futureObject.transform.position = Vector3.Lerp(_startPos, new Vector3(futureObject.transform.position.x, futureTargetY, futureObject.transform.position.z),
-            time *2 / timeToTransition);
-
+      //  _ = TransitionToPresentTask();
     }
-    
+
+    private async UniTask TransitionToPresentTask()
+    {
+        //idk why this wont work :( -- ill fix over the weekend :D
+        isTransitioning = true;
+        
+        m_StartPos = futureObject.transform.position;
+        
+        eyeXROrigin.SetActive(true);
+        floorXROrigin.SetActive(false);
+
+        eyeXROrigin.transform.position = startingPosition;
+        eyeXROrigin.transform.rotation = startingRotation;
+        /*/
+
+        float camTime = 0;
+        while (camTime < timeToTransition)
+        {
+            camTime += Time.deltaTime;
+            eyeXROrigin.transform.position = Vector3.Lerp(floorXROrigin.transform.position, startingPosition, camTime / timeToTransition);
+            eyeXROrigin.transform.rotation = Quaternion.Lerp( floorXROrigin.transform.rotation, startingRotation, camTime / timeToTransition);
+            await UniTask.Yield();
+        }
+        /*/
+        
+        float campusTime = 0;
+        while (campusTime < timeToTransition)
+        {
+            campusTime += Time.deltaTime;
+            
+            futureObject.transform.position = Vector3.Lerp(m_StartPos,
+                new Vector3(futureObject.transform.position.x, 41, futureObject.transform.position.z),
+                EaseInOutQuad(campusTime / timeToTransition));
+            
+            await UniTask.Yield();
+        }
+        
+        
+        Debug.Log("End transition....");
+        isTransitioning = false;
+    }
+
+        
     float EaseInOutQuad(float t)
     {
         return t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
