@@ -5,9 +5,29 @@ using UnityEngine;
 
 public class TransitionManager : MonoBehaviour
 {
+    public enum TransitionState
+    {
+        Present,
+        FutureBirdsEye,
+        FutureOnFloor
+    }
+
+    [System.Serializable]
+    public struct Transition
+    {
+        public TransitionState state;
+        public float birdsEyeHeight;
+        public float futureHeight;
+        public float presentHeight;
+        public bool birdsEyeEnabled;
+        public bool floorEnabled;
+    }
+    
     [Header("Present & Future Objects")]
+    [SerializeField] private Transition[] transitions;
     [SerializeField] private GameObject presentObject;
     [SerializeField] private GameObject futureObject;
+    
     [SerializeField] private float futureTargetY;
     
 
@@ -17,9 +37,14 @@ public class TransitionManager : MonoBehaviour
     [Header("XR")]
     
     [SerializeField] private GameObject eyeXROrigin;
+    [SerializeField] private GameObject floorXROrigin;
+
+    [Space]
+    
+    [Header("Starting Positions For BIRDS EYE")]
+    
     [SerializeField] private Vector3 startingPosition;
     [SerializeField] private Quaternion startingRotation;
-    [SerializeField] private GameObject floorXROrigin;
 
     
     
@@ -45,9 +70,109 @@ public class TransitionManager : MonoBehaviour
         futureObject.transform.position = new Vector3(0, 44, 0);
         eyeXROrigin.transform.position = startingPosition;
         eyeXROrigin.transform.rotation = startingRotation;
+        
+        TransitionToState(TransitionState.FutureBirdsEye, Vector3.zero);
     }
     
 
+    public void TransitionToState(TransitionState state, Vector3 floorXRPosition)
+    {
+        _ = TransitionToStateTask(state, floorXRPosition);
+    }
+
+    private async UniTask TransitionToStateTask(TransitionState state, Vector3 floorXRPosition) 
+    {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        int index = GetTransitionIndex(state);
+        Transition transition = transitions[index];
+
+        Vector3 startPos = eyeXROrigin.activeSelf ? eyeXROrigin.transform.position : floorXROrigin.transform.position;
+        Quaternion startRot = eyeXROrigin.activeSelf ? eyeXROrigin.transform.rotation : floorXROrigin.transform.rotation;
+
+        Vector3 targetPos = floorXRPosition == Vector3.zero ? startPos : floorXRPosition;
+        targetPos.y = state switch
+        {
+            TransitionState.Present => transition.presentHeight,
+            TransitionState.FutureBirdsEye => transition.birdsEyeHeight,
+            TransitionState.FutureOnFloor => transition.futureHeight,
+            _ => startPos.y
+        };
+    
+        Quaternion targetRot = (state == TransitionState.FutureBirdsEye) ? startingRotation : Quaternion.identity;
+
+        Vector3 futureStartPos = futureObject.transform.position;
+        Vector3 presentStartPos = presentObject.transform.position;
+
+        Vector3 futureTargetPos = new Vector3(futureStartPos.x, transition.futureHeight, futureStartPos.z);
+        Vector3 presentTargetPos = new Vector3(presentStartPos.x, transition.presentHeight, presentStartPos.z);
+
+        float elapsedTime = 0f;
+        while (elapsedTime < timeToTransition)
+        {
+            float t = elapsedTime / timeToTransition;
+            if (eyeXROrigin.activeSelf)
+            {
+                eyeXROrigin.transform.position = Vector3.Lerp(startPos, targetPos, t);
+                eyeXROrigin.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            }
+            else
+            {
+                floorXROrigin.transform.position = Vector3.Lerp(startPos, targetPos, t);
+                floorXROrigin.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            }
+            futureObject.transform.position = Vector3.Lerp(futureStartPos, futureTargetPos, t);
+            presentObject.transform.position = Vector3.Lerp(presentStartPos, presentTargetPos, t);
+            elapsedTime += Time.deltaTime;
+            await UniTask.Yield();
+        }
+
+        if (transition.birdsEyeEnabled)
+        {
+            eyeXROrigin.transform.position = targetPos;
+            eyeXROrigin.transform.rotation = targetRot;
+            floorXROrigin.SetActive(false);
+            eyeXROrigin.SetActive(true);
+
+        }
+        else if (transition.floorEnabled)
+        {
+            floorXROrigin.transform.position = floorXRPosition == Vector3.zero ? targetPos : floorXRPosition;
+            floorXROrigin.transform.rotation = targetRot;
+            eyeXROrigin.SetActive(false);
+            floorXROrigin.SetActive(true);
+        }
+        else
+        {
+            eyeXROrigin.transform.position = targetPos;
+            eyeXROrigin.transform.rotation = targetRot;
+            floorXROrigin.SetActive(false);
+            eyeXROrigin.SetActive(true);
+
+        }
+
+        futureObject.transform.position = futureTargetPos;
+        presentObject.transform.position = presentTargetPos;
+
+        isTransitioning = false;
+    }
+
+
+    private int GetTransitionIndex(TransitionState state)
+    {
+        for (int i = 0; i < transitions.Length; i++)
+        {
+            if (state == transitions[i].state)
+            {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+    
+    /*/
     public void TransitionToFuture(Vector3 target)
     {
         _ = TransitionToFutureTask(target);
@@ -107,7 +232,7 @@ public class TransitionManager : MonoBehaviour
 
         eyeXROrigin.transform.position = startingPosition;
         eyeXROrigin.transform.rotation = startingRotation;
-        /*/
+        /*
 
         float camTime = 0;
         while (camTime < timeToTransition)
@@ -117,7 +242,7 @@ public class TransitionManager : MonoBehaviour
             eyeXROrigin.transform.rotation = Quaternion.Lerp( floorXROrigin.transform.rotation, startingRotation, camTime / timeToTransition);
             await UniTask.Yield();
         }
-        /*/
+        /*
         
         float campusTime = 0;
         while (campusTime < timeToTransition)
@@ -141,4 +266,5 @@ public class TransitionManager : MonoBehaviour
     {
         return t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
     }
+    /*/
 }

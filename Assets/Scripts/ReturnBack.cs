@@ -13,7 +13,6 @@ public class ReturnBack : MonoBehaviour
 
     void Return()
     {
-        Debug.Log("Return");
-        TransitionManager.Instance.TransitionToPresent();
+        TransitionManager.Instance.TransitionToState(TransitionManager.TransitionState.FutureBirdsEye, Vector3.zero);
     }
 }

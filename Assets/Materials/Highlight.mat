@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-6704708019908649061
+--- !u!114 &-2700827422895797545
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_HitShader
-  m_Shader: {fileID: -6465566751694194690, guid: 8f39bc62c35c98841add3a35c977bf9d, type: 3}
+  m_Name: Highlight
+  m_Shader: {fileID: -6465566751694194690, guid: 3f0043476e394784c9a728c0fa240d65, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -53,8 +53,8 @@ Material:
     m_Floats:
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Strength: 1
+    - _Scale: 1
     m_Colors:
-    - _Emissive: {r: 0, g: 1, b: 0.10007739, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
