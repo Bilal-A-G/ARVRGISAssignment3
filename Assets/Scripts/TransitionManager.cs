@@ -80,6 +80,7 @@ public class TransitionManager : MonoBehaviour
         _ = TransitionToStateTask(state, floorXRPosition);
     }
 
+    //should probs take into consideration the rotation 
     private async UniTask TransitionToStateTask(TransitionState state, Vector3 floorXRPosition) 
     {
         if (isTransitioning) return;
