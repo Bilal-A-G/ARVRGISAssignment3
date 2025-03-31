@@ -71,8 +71,10 @@ public class TransitionManager : MonoBehaviour
         eyeXROrigin.transform.position = startingPosition;
         eyeXROrigin.transform.rotation = startingRotation;
         
-        TransitionToState(TransitionState.FutureBirdsEye, Vector3.zero);
+     //   TransitionToState(TransitionState.Present, Vector3.zero);
     }
+    
+    public void StartGame() => TransitionToState(TransitionState.FutureBirdsEye, Vector3.zero);
     
 
     public void TransitionToState(TransitionState state, Vector3 floorXRPosition)
