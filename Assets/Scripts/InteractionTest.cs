@@ -20,7 +20,18 @@ public class InteractionTest : MonoBehaviour
 
     private void Start()
     {
-        inputAsset[actionRef.name].performed += ctx => Select();
+    }
+
+    private void OnEnable()
+    {
+        inputAsset[actionRef.name].performed += Select;
+
+    }
+
+    private void OnDisable()
+    {
+        inputAsset[actionRef.name].performed -= Select;
+
     }
 
     private void Update()
@@ -63,13 +74,14 @@ public class InteractionTest : MonoBehaviour
       //  validSphere.transform.position = new Vector3(_hit.point.x, 88, _hit.point.z);
     }
 
-    private void Select()
+    private void Select(InputAction.CallbackContext ctx)
     {
         if (TransitionManager.Instance.isTransitioning)
         {
             return;
         }
 
+        Debug.Log(gameObject.name);
         if (_currentInteract)
         {
             if (_currentInteract.TryGetComponent(out IInteractable iInteractable))
